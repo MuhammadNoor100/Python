@@ -1,0 +1,159 @@
+from abc import ABC, abstractmethod
+class Contact_System(ABC):
+    def __init__(self):
+        self.contact_list = []
+    @abstractmethod
+    def add_contact(self,name,username,phone_number):
+        pass
+    @abstractmethod
+    def remove_contact(self):
+        pass
+    @abstractmethod
+    def search_contact(self):
+        pass
+    @abstractmethod
+    def show_all_contact(self):
+        pass
+    @abstractmethod
+    def update_contact(self):
+        pass
+#Main Class
+
+import json
+
+from contacts import Contact_System
+
+class User_Data(Contact_System):
+    def store_data(self):
+        with open("contact.json","w") as w:
+            json.dump(self.contact_list,w,indent=4)
+    def load_data(self):
+
+        with open("contact.json","r") as r:
+           self.contact_list = json.load(r)
+           print(self.contact_list)
+    def add_contact(self,name,username,phone_number):
+      try:
+        if not name:
+            raise ValueError("Name shouldn't be empty for future contact finding")
+        user_dic = {
+            "name": name,
+            "username": username,
+            "phone_number": phone_number
+        }
+        self.contact_list.append(user_dic)
+        print(self.contact_list)
+        self.store_data()
+      except ValueError:
+          print("input Valid Value")
+    def remove_contact(self):
+        if not self.contact_list:
+            return "Empty"
+        try:
+         self.show_all_contact()
+         index = int(input("Delete it through index: "))
+         if 0 < index <= len(self.contact_list):
+            removed_contact = self.contact_list.pop(index - 1)
+            return f"Removed contact: {removed_contact}"
+         else:
+            raise ValueError("Input the Valid Number to delete")
+        except ValueError:
+            print("Input Valid Value")
+    def show_all_contact(self):
+        if not self.contact_list:
+            return "No contact found"
+        for index, contact in enumerate(self.contact_list, start=1):
+            print(f"{index} - {contact["name"],contact["username"],contact["phone_number"]}")
+        return None
+    def search_contact(self):
+        if not self.contact_list:
+            return "No contact found"
+        try:
+         choice = input("Input Choice: name, username, phone_number: ")
+         for contact in self.contact_list:
+            if choice == "name":
+                name1 = input("Input your name to find: ")
+                if contact["name"] == name1:
+                    return contact["name"], contact["username"], contact["phone_number"]
+                else:
+                    return "Contact not found"
+            elif choice == "username":
+                username1 = input("Input your username to find: ")
+                if contact["username"] == username1:
+                    return contact["name"], contact["username"], contact["phone_number"]
+                else:
+                    return "Contact not found"
+            elif choice == "phone":
+                phone1 = int(input("Input your phone number to find: "))
+                if contact["phone_number"] == phone1:
+                    return contact["name"], contact["username"], contact["phone_number"]
+                else:
+                    return "Contact not found"
+            else:
+                print("Invalid Word")
+        except ValueError:
+            print("Print Valid Value")
+        return None
+    def update_contact(self):
+        self.show_all_contact()
+        choice = input("Input your choice for update: Type, name,username,phone: ")
+        for i in self.contact_list:
+         if choice == "name":
+            name = input("Input updated name: ")
+            if i["name"] == name:
+                i["name"] = name
+                return name
+         elif choice == "username":
+            username = input("Input updated username: ")
+            if i["username"] == username:
+                i["username"] = username
+                return username
+         elif choice == "phone":
+            phone = input("Input updated phone: ")
+            if i["phone_number"] == phone:
+                i["phone_number"] = phone
+                return phone
+         else:
+             print("Invalid Value")
+        return None
+
+    def main_menu(self):
+        while True:
+            print("=== Contact Management System ===")
+            print("1 - Add Contact")
+            print("2 - Find Contact")
+            print("3 - Show All Contacts")
+            print("4 - Delete Contact")
+            print("5 - Update Contact")
+            print("6 - Read Contact")
+            print("0 - Exit")
+
+            choice = input("Input your choice: ").strip()
+            if choice == "1":
+                name = input("Input Name: ")
+                username = input("Input username: ")
+                phone = input("input phone_number: ")
+                self.add_contact(name,username,phone)
+            elif choice == "2":
+                print(self.search_contact())
+            elif choice == "3":
+                contacts = self.show_all_contact()
+                print(contacts)
+            elif choice == "4":
+                result = self.remove_contact()
+                print(result)
+            elif choice == "5":
+                print(self.update_contact())
+            elif choice == "6":
+                self.load_data()
+            elif choice == "0":
+                print("Thanks for using the Contact System!")
+                break
+            else:
+                print("Invalid choice! Please try again.")
+p = User_Data()
+p.main_menu()
+
+
+
+
