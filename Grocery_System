@@ -1,0 +1,220 @@
+import json
+
+class GroceryManager:
+    def __init__(self, filename="grocery_data.json"):
+        self._grocery_list = []  # Encapsulated (private by convention)
+        self._filename = filename
+        self._load_from_file()
+
+    # ---------- Core Operations (Abstraction) ----------
+    
+    def add_item(self):
+        try:
+            item = input("Input Name: ").strip()
+            if not item:
+                print("Item name cannot be empty.")
+                return
+            price = int(input("Input Price: "))
+            quantity = int(input("Input Quantity: "))
+            if price < 0 or quantity < 0:
+                print("Price and quantity must be non-negative.")
+                return
+
+            grocery_dict = {
+                "item": item,
+                "price": price,
+                "quantity": quantity
+            }
+            self._grocery_list.append(grocery_dict)
+            total_cost = price * quantity
+            print(f"\n✅ Added: {item}")
+            print(f"Single Price: ${price} | Quantity: {quantity} | Total: ${total_cost}")
+        except ValueError:
+            print("❌ Invalid input. Please enter numbers for price and quantity.")
+
+    def show_all_items(self):
+        if not self._grocery_list:
+            print("🛒 Grocery list is empty.")
+            return
+        print("\n--- Grocery List ---")
+        for idx, item in enumerate(self._grocery_list, start=1):
+            print(f"{idx}. {item['item']} - ${item['price']} x {item['quantity']}")
+
+    def calculate_total_bill(self):
+        if not self._grocery_list:
+            print("🛒 List is empty. Total bill: $0")
+            return 0
+        total = sum(item["price"] * item["quantity"] for item in self._grocery_list)
+        print(f"💰 Total Bill: ${total}")
+        return total
+
+    def update_item(self):
+        if not self._grocery_list:
+            print("🛒 List is empty.")
+            return
+        self.show_all_items()
+        target = input("\nEnter item name to update: ").strip()
+        for item in self._grocery_list:
+            if item["item"].lower() == target.lower():
+                print("\nWhat to update? (item / price / quantity)")
+                choice = input("Choice: ").lower().strip()
+                try:
+                    if choice == "item":
+                        new_name = input("New item name: ").strip()
+                        if new_name:
+                            item["item"] = new_name
+                            print(f"✅ Item renamed to '{new_name}'")
+                    elif choice == "price":
+                        new_price = int(input("New price: "))
+                        if new_price >= 0:
+                            item["price"] = new_price
+                            print(f"✅ Price updated to ${new_price}")
+                        else:
+                            print("❌ Price cannot be negative.")
+                    elif choice == "quantity":
+                        new_qty = int(input("New quantity: "))
+                        if new_qty >= 0:
+                            item["quantity"] = new_qty
+                            print(f"✅ Quantity updated to {new_qty}")
+                        else:
+                            print("❌ Quantity cannot be negative.")
+                    else:
+                        print("❌ Invalid option.")
+                    return
+                except ValueError:
+                    print("❌ Invalid number input.")
+                return
+        print("❌ Item not found.")
+
+    def delete_item(self):
+        if not self._grocery_list:
+            print("🛒 List is empty.")
+            return
+        self.show_all_items()
+        try:
+            index = int(input("\nEnter item number to delete: ")) - 1
+            if 0 <= index < len(self._grocery_list):
+                removed = self._grocery_list.pop(index)
+                print(f"🗑️ Deleted: {removed['item']}")
+            else:
+                print("❌ Invalid index.")
+        except ValueError:
+            print("❌ Please enter a valid number.")
+
+    def search_item(self):
+        name = input("Search item by name: ").strip()
+        found = False
+        for item in self._grocery_list:
+            if name.lower() in item["item"].lower():
+                print(f"🔍 Found: {item['item']} - ${item['price']} x {item['quantity']}")
+                found = True
+        if not found:
+            print("❌ Item not found.")
+
+    def add_quantity_to_existing(self):
+        name = input("Enter item name to add quantity: ").strip()
+        try:
+            extra_qty = int(input("Additional quantity: "))
+            if extra_qty < 0:
+                print("❌ Quantity must be non-negative.")
+                return
+            for item in self._grocery_list:
+                if item["item"].lower() == name.lower():
+                    item["quantity"] += extra_qty
+                    print(f"✅ Added {extra_qty} to '{item['item']}'. New quantity: {item['quantity']}")
+                    return
+            print("❌ Item not found. Add it first.")
+        except ValueError:
+            print("❌ Invalid quantity.")
+
+    def print_receipt(self):
+        if not self._grocery_list:
+            print("🛒 No items to print receipt.")
+            return
+        print("\n" + "="*50)
+        print("           🛒 GROCERY RECEIPT 🛒")
+        print("="*50)
+        total = 0
+        for i, item in enumerate(self._grocery_list, start=1):
+            subtotal = item["price"] * item["quantity"]
+            total += subtotal
+            print(f"{i}. {item['item']:<15} ${item['price']:<5} x {item['quantity']:<3} = ${subtotal}")
+        print("-"*50)
+        print(f"{'TOTAL':<40} = ${total}")
+        print("="*50)
+
+    # ---------- File Persistence (Encapsulation) ----------
+    
+    def save_to_file(self):
+        try:
+            with open(self._filename, "w") as f:
+                json.dump(self._grocery_list, f, indent=2)
+            print(f"✅ Saved {len(self._grocery_list)} items to '{self._filename}'")
+        except Exception as e:
+            print(f"❌ Failed to save: {e}")
+
+    def _load_from_file(self):
+        try:
+            with open(self._filename, "r") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    self._grocery_list = data
+                    print(f"📥 Loaded {len(self._grocery_list)} items from '{self._filename}'")
+                else:
+                    print("⚠️ Invalid file format. Starting fresh.")
+                    self._grocery_list = []
+        except FileNotFoundError:
+            print("📁 No saved data found. Starting with an empty list.")
+        except json.JSONDecodeError:
+            print("⚠️ Corrupted file. Starting fresh.")
+            self._grocery_list = []
+
+    # ---------- Public Interface ----------
+    
+    def run(self):
+        print("🌟 Welcome to Grocery Manager!")
+        while True:
+            print("\n--- MENU ---")
+            print("1. Add Item")
+            print("2. Show All Items")
+            print("3. Total Bill")
+            print("4. Update Item")
+            print("5. Delete Item")
+            print("6. Search Item")
+            print("7. Add Quantity to Existing Item")
+            print("8. Print Receipt")
+            print("9. Save to File")
+            print("10. Exit")
+            
+            choice = input("\nEnter your choice: ").strip()
+            
+            if choice == "1":
+                self.add_item()
+            elif choice == "2":
+                self.show_all_items()
+            elif choice == "3":
+                self.calculate_total_bill()
+            elif choice == "4":
+                self.update_item()
+            elif choice == "5":
+                self.delete_item()
+            elif choice == "6":
+                self.search_item()
+            elif choice == "7":
+                self.add_quantity_to_existing()
+            elif choice == "8":
+                self.print_receipt()
+            elif choice == "9":
+                self.save_to_file()
+            elif choice == "10":
+                self.save_to_file()  # Auto-save on exit
+                print("👋 Thank you! Goodbye!")
+                break
+            else:
+                print("❌ Invalid choice. Please try again.")
+
+
+# ---------- Entry Point ----------
+if __name__ == "__main__":
+    app = GroceryManager()
+    app.run()
